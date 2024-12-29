@@ -1,0 +1,129 @@
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyAWC1oUt-02N5UfPwpyWHUlr8Pn6hlUrv0",
+    authDomain: "urbex-czsk.firebaseapp.com",
+    projectId: "urbex-czsk",
+    storageBucket: "urbex-czsk.firebasestorage.app",
+    messagingSenderId: "482976967449",
+    appId: "1:482976967449:web:4003ab7fb3846d74d7b388"
+    measurementId: "G-35JPPT8SE6"
+};
+
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database(app);
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cz/sk online urbex map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #333; color: #fff; }
+        #map { height: 600px; width: 100%; }
+        .button-container { margin: 10px 0; }
+        button { padding: 10px; border-radius: 5px; background-color: #444; color: #fff; border: none; cursor: pointer; }
+        .login-form { display: none; margin: 10px 0; }
+        .login-form input { margin-right: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>cz/sk online urbex map</h1>
+    <div class="button-container">
+        <button onclick="showLoginForm()">Admin Login</button>
+        <div class="login-form" id="login-form">
+            <input type="text" id="nickname" placeholder="Nickname">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="login()">Login</button>
+        </div>
+        <button onclick="window.location.href='https://discord.gg/CE8FBhJ3Br'">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/9/98/Discord_logo.svg" alt="Discord" style="height: 20px; vertical-align: middle;"> Join Discord
+        </button>
+        <button>Buy VIP (Coming Soon)</button>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database(app);
+
+        // Initialize the map
+        const map = L.map('map').setView([50.0755, 14.4378], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Function to show the login form
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        let isAdmin = false;
+
+        // Login function
+        function login() {
+            const nickname = document.getElementById('nickname').value;
+            const password = document.getElementById('password').value;
+            if (nickname === 'admin' && password === 'adminpristup5') {
+                isAdmin = true;
+                alert('Logged in as admin');
+            } else {
+                isAdmin = false;
+                alert('Logged in as ' + nickname);
+            }
+        }
+
+        // Function to add marker to the map and database
+        function addMarker(lat, lng, nickname) {
+            const newMarkerRef = database.ref('markers').push();
+            newMarkerRef.set({
+                lat: lat,
+                lng: lng,
+                addedBy: nickname
+            });
+
+            const marker = L.marker([lat, lng], { draggable: true }).addTo(map)
+                .bindPopup('Abandoned place')
+                .openPopup();
+
+            marker.on('click', function (e) {
+                if (isAdmin || nickname === document.getElementById('nickname').value) {
+                    if (confirm('Do you want to delete this marker?')) {
+                        newMarkerRef.remove();
+                        map.removeLayer(marker);
+                    }
+                }
+            });
+        }
+
+        // Load existing markers from Firebase
+        database.ref('markers').on('child_added', function(snapshot) {
+            const data = snapshot.val();
+            addMarker(data.lat, data.lng, data.addedBy);
+        });
+
+        // Add click event to the map to add markers
+        map.on('click', function(e) {
+            const nickname = document.getElementById('nickname').value || 'guest';
+            addMarker(e.latlng.lat, e.latlng.lng, nickname);
+        });
+    </script>
+</body>
+</html>
